@@ -83,49 +83,37 @@ public class ElevatorSystem {
 
   public Elevator getFastestElevatorToDest(int dest) {
     Elevator fastestElevator = elevators.stream().sorted((a, b) -> {
-      int distanceA = 0;
-      if (a.getHandlingRequest() == null) {
-        distanceA = Math.abs(dest - a.getCurrentFloor());
-      } else {
-        if (a.getHandlingRequest().isOnTheWayToFrom()) {
-          distanceA += Math.abs(a.getCurrentFloor() - a.getHandlingRequest().getFrom());
-          distanceA += Math.abs(a.getHandlingRequest().getTo() - a.getHandlingRequest().getFrom());
-        } else {
-          distanceA += Math.abs(a.getCurrentFloor() - a.getHandlingRequest().getTo());
-        }
-        int prevA = a.getHandlingRequest().getTo();
-        for (Request req : a.getRequestQueue()) {
-          distanceA += Math.abs(prevA - req.getFrom());
-          distanceA += Math.abs(req.getTo() - req.getFrom());
-          prevA = req.getTo();
-        }
-        distanceA += Math.abs(dest - prevA);
-      }
+      int distanceA = getTotalDistanceOf(a, dest);
       // if (dest == 1) System.out.println(a.getName() + ", " + distanceA);
 
-      int distanceB = 0;
-      if (b.getHandlingRequest() == null) {
-        distanceB = Math.abs(dest - b.getCurrentFloor());
-      } else {
-        if (b.getHandlingRequest().isOnTheWayToFrom()) {
-          distanceB += Math.abs(b.getCurrentFloor() - b.getHandlingRequest().getFrom());
-          distanceB += Math.abs(b.getHandlingRequest().getTo() - b.getHandlingRequest().getFrom());
-        } else {
-          distanceB += Math.abs(b.getCurrentFloor() - b.getHandlingRequest().getTo());
-        }
-        int prevB = b.getHandlingRequest().getTo();
-        for (Request req : b.getRequestQueue()) {
-          distanceB += Math.abs(prevB - req.getFrom());
-          distanceB += Math.abs(req.getTo() - req.getFrom());
-          prevB = req.getTo();
-        }
-        distanceB += Math.abs(dest - prevB);
-      }
+      int distanceB = getTotalDistanceOf(b, dest);
       // if (dest == 1) System.out.println(b.getName() + ", " + distanceB);
 
       return Integer.compare(distanceA, distanceB);
     }).findFirst().get();
     return fastestElevator;
+  }
+
+  public static int getTotalDistanceOf(Elevator e, int dest) {
+    int distance = 0;
+    if (e.getHandlingRequest() == null) {
+      distance = Math.abs(dest - e.getCurrentFloor());
+    } else {
+      if (e.getHandlingRequest().isOnTheWayToFrom()) {
+        distance += Math.abs(e.getCurrentFloor() - e.getHandlingRequest().getFrom());
+        distance += Math.abs(e.getHandlingRequest().getTo() - e.getHandlingRequest().getFrom());
+      } else {
+        distance += Math.abs(e.getCurrentFloor() - e.getHandlingRequest().getTo());
+      }
+      int prev = e.getHandlingRequest().getTo();
+      for (Request req : e.getRequestQueue()) {
+        distance += Math.abs(prev - req.getFrom());
+        distance += Math.abs(req.getTo() - req.getFrom());
+        prev = req.getTo();
+      }
+      distance += Math.abs(dest - prev);
+    }
+    return distance;
   }
 
   @Override
