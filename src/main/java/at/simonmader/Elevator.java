@@ -6,6 +6,7 @@ import java.util.List;
 public class Elevator {
   private String name;
   private int currentFloor;
+  private String visualColor = "\u001B[30m";
 
   private Request handlingRequest;
   private List<Request> requestQueue = new LinkedList<>();
@@ -63,6 +64,14 @@ public class Elevator {
     this.requestQueue.add(request);
   }
 
+  public String getVisualColor() {
+    return visualColor;
+  }
+
+  public void setVisualColor(String visualColor) {
+    this.visualColor = visualColor;
+  }
+
   public void handleNextRequest() {
     if (this.requestQueue.isEmpty()) {
       setHandlingRequest(null);
@@ -70,7 +79,6 @@ public class Elevator {
       Request request = requestQueue.remove(0);
       setHandlingRequest(request);
       request.setElevator(this);
-      ElevatorSystem.getInstance().execute(request);
     }
   }
 
@@ -80,9 +88,9 @@ public class Elevator {
         new StringBuilder(new String(new char[ElevatorSystem.NUM_FLOORS + 1]).replace("\0", "="));
     visual.setCharAt(getCurrentFloor(), 'O');
     return String.format("%s, %3s [%s], %s, Queue: %s", getName(), "E" + getCurrentFloor(),
-        visual.toString(), this.handlingRequest,
-        this.requestQueue.toString().length() > 10
-            ? this.requestQueue.toString().substring(0, 10) + "..."
+        visual.toString().replace("O", this.visualColor + "O\u001B[0m"), this.handlingRequest,
+        this.requestQueue.toString().length() > 20
+            ? this.requestQueue.toString().substring(0, 20) + "..."
             : this.requestQueue.toString());
   }
 }

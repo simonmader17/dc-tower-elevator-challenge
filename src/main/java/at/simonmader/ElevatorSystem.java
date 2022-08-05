@@ -10,32 +10,19 @@ public class ElevatorSystem {
   public static final int NUM_ELEVATORS = 7;
   public static final int NUM_FLOORS = 55;
 
-  private static ElevatorSystem instance;
-
   private List<Elevator> elevators = new LinkedList<>();
-  private ExecutorService requestHandler = Executors.newFixedThreadPool(NUM_ELEVATORS);
+  private ExecutorService requestHandler = Executors.newCachedThreadPool();
 
-  private ElevatorSystem() {
+  public ElevatorSystem() {
     this(true);
   }
 
-  private ElevatorSystem(boolean printState) {
+  public ElevatorSystem(boolean printState) {
     for (int i = 1; i <= NUM_ELEVATORS; i++) {
       elevators.add(new Elevator(String.valueOf(i), i));
     }
     if (printState)
       printState();
-  }
-
-  public static synchronized ElevatorSystem getInstance() {
-    return getInstance(true);
-  }
-
-  public static synchronized ElevatorSystem getInstance(boolean printState) {
-    if (instance == null) {
-      instance = new ElevatorSystem(printState);
-    }
-    return instance;
   }
 
   public List<Elevator> getElevators() {
@@ -47,7 +34,7 @@ public class ElevatorSystem {
       System.out.println(this);
       while (!this.requestHandler.isTerminated()) {
         try {
-          Thread.sleep(1000);
+          Thread.sleep((int) (1000 * Request.TIME_MULTIPLIER));
         } catch (InterruptedException e) {
           e.printStackTrace();
         }
@@ -61,18 +48,14 @@ public class ElevatorSystem {
   }
 
   public void execute(Request request) {
-    if (request.getElevator() == null) {
-      Elevator fastestElevator = getFastestElevatorToDest(request.getFrom());
-      if (fastestElevator.getHandlingRequest() == null) {
-        request.setElevator(fastestElevator);
-        fastestElevator.setHandlingRequest(request);
-        requestHandler.execute(request);
-      } else {
-        request.setElevator(fastestElevator);
-        fastestElevator.addRequestToQueue(request);
-        // requestHandler.execute(request);
-      }
+    Elevator fastestElevator = getFastestElevatorToDest(request.getFrom());
+    if (fastestElevator.getHandlingRequest() == null) {
+      request.setElevator(fastestElevator);
+      fastestElevator.setHandlingRequest(request);
+      requestHandler.execute(request);
     } else {
+      // request.setElevator(fastestElevator);
+      fastestElevator.addRequestToQueue(request);
       requestHandler.execute(request);
     }
   }
@@ -81,14 +64,14 @@ public class ElevatorSystem {
     requestHandler.shutdown();
   }
 
+  public boolean isTerminated() {
+    return requestHandler.isTerminated();
+  }
+
   public Elevator getFastestElevatorToDest(int dest) {
     Elevator fastestElevator = elevators.stream().sorted((a, b) -> {
       int distanceA = getTotalDistanceOf(a, dest);
-      // if (dest == 1) System.out.println(a.getName() + ", " + distanceA);
-
       int distanceB = getTotalDistanceOf(b, dest);
-      // if (dest == 1) System.out.println(b.getName() + ", " + distanceB);
-
       return Integer.compare(distanceA, distanceB);
     }).findFirst().get();
     return fastestElevator;

@@ -6,22 +6,9 @@ import java.util.List;
 public class Main {
 
   public static void main(String[] args) throws InterruptedException {
-    ElevatorSystem elevatorSystem = ElevatorSystem.getInstance(true);
-
-    // elevatorSystem.execute(new Request(0, 20));
-    // elevatorSystem.execute(new Request(0, 20));
-    // elevatorSystem.execute(new Request(0, 20));
-    // elevatorSystem.execute(new Request(0, 20));
-    // elevatorSystem.execute(new Request(0, 20));
-    // elevatorSystem.execute(new Request(0, 20));
-    // elevatorSystem.execute(new Request(0, 20));
-    // elevatorSystem.execute(new Request(1, 20));
-    // elevatorSystem.execute(new Request(0, 20));
-    // elevatorSystem.execute(new Request(0, 20));
-    // elevatorSystem.execute(new Request(0, 20));
+    ElevatorSystem elevatorSystem = new ElevatorSystem(true);
 
     List<Request> requests = new LinkedList<>();
-
     requests.add(new Request(55, 53));
     requests.add(new Request(0, 40));
     requests.add(new Request(55, 34));
@@ -55,7 +42,7 @@ public class Main {
       elevatorSystem.execute(req);
     }
 
-    // elevatorSystem.shutdown();
+    elevatorSystem.shutdown();
   }
 
 }
