@@ -11,7 +11,7 @@ public class ElevatorSystem {
   public static final int NUM_FLOORS = 55;
 
   private List<Elevator> elevators = new LinkedList<>();
-  private ExecutorService requestHandler = Executors.newCachedThreadPool();
+  private ExecutorService elevatorPool = Executors.newFixedThreadPool(7);
 
   public ElevatorSystem() {
     this(true);
@@ -19,22 +19,22 @@ public class ElevatorSystem {
 
   public ElevatorSystem(boolean printState) {
     for (int i = 1; i <= NUM_ELEVATORS; i++) {
-      elevators.add(new Elevator(String.valueOf(i), i));
+      elevators.add(new Elevator(String.valueOf(i)));
     }
-    if (printState)
-      printState();
-  }
-
-  public List<Elevator> getElevators() {
-    return new LinkedList<>(elevators);
+    for (Elevator e : elevators) {
+      elevatorPool.execute(e);
+    }
+    if (printState) {
+      this.printState();
+    }
   }
 
   public void printState() {
     new Thread(() -> {
       System.out.println(this);
-      while (!this.requestHandler.isTerminated()) {
+      while (!this.elevatorPool.isTerminated()) {
         try {
-          Thread.sleep((int) (1000 * Request.TIME_MULTIPLIER));
+          Thread.sleep(100);
         } catch (InterruptedException e) {
           e.printStackTrace();
         }
@@ -49,23 +49,11 @@ public class ElevatorSystem {
 
   public void execute(Request request) {
     Elevator fastestElevator = getFastestElevatorToDest(request.getFrom());
-    if (fastestElevator.getHandlingRequest() == null) {
-      request.setElevator(fastestElevator);
-      fastestElevator.setHandlingRequest(request);
-      requestHandler.execute(request);
-    } else {
-      // request.setElevator(fastestElevator);
-      fastestElevator.addRequestToQueue(request);
-      requestHandler.execute(request);
-    }
+    fastestElevator.addRequestToQueue(request);
   }
 
   public void shutdown() {
-    requestHandler.shutdown();
-  }
-
-  public boolean isTerminated() {
-    return requestHandler.isTerminated();
+    elevatorPool.shutdown();
   }
 
   public Elevator getFastestElevatorToDest(int dest) {
@@ -79,17 +67,22 @@ public class ElevatorSystem {
 
   public static int getTotalDistanceOf(Elevator e, int dest) {
     int distance = 0;
-    if (e.getHandlingRequest() == null) {
+    if (e.getHandlingRequest() == null && e.getRequestQueue().isEmpty()) {
       distance = Math.abs(dest - e.getCurrentFloor());
     } else {
-      if (e.getHandlingRequest().isOnTheWayToFrom()) {
-        distance += Math.abs(e.getCurrentFloor() - e.getHandlingRequest().getFrom());
-        distance += Math.abs(e.getHandlingRequest().getTo() - e.getHandlingRequest().getFrom());
-      } else {
-        distance += Math.abs(e.getCurrentFloor() - e.getHandlingRequest().getTo());
+      Request nextRequest = e.getHandlingRequest();
+      List<Request> remainingQueue = e.getRequestQueue();
+      if (nextRequest == null) {
+        nextRequest = remainingQueue.remove(0);
       }
-      int prev = e.getHandlingRequest().getTo();
-      for (Request req : e.getRequestQueue()) {
+      if (e.isOnTheWayToFrom()) {
+        distance += Math.abs(e.getCurrentFloor() - nextRequest.getFrom());
+        distance += Math.abs(nextRequest.getTo() - nextRequest.getFrom());
+      } else {
+        distance += Math.abs(e.getCurrentFloor() - nextRequest.getTo());
+      }
+      int prev = nextRequest.getTo();
+      for (Request req : remainingQueue) {
         distance += Math.abs(prev - req.getFrom());
         distance += Math.abs(req.getTo() - req.getFrom());
         prev = req.getTo();
