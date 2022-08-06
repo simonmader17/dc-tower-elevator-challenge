@@ -34,7 +34,7 @@ public class ElevatorSystem {
       System.out.println(this);
       while (!this.elevatorPool.isTerminated()) {
         try {
-          Thread.sleep(100);
+          Thread.sleep(1000);
         } catch (InterruptedException e) {
           e.printStackTrace();
         }
@@ -53,7 +53,17 @@ public class ElevatorSystem {
   }
 
   public void shutdown() {
+    elevators.stream().forEach((e) -> e.shutdown());
     elevatorPool.shutdown();
+  }
+
+  public boolean isReadyForShutdown() {
+    for (Elevator e : elevators) {
+      if (e.getHandlingRequest() != null || !e.getRequestQueue().isEmpty()) {
+        return false;
+      }
+    }
+    return true;
   }
 
   public Elevator getFastestElevatorToDest(int dest) {
@@ -67,11 +77,11 @@ public class ElevatorSystem {
 
   public static int getTotalDistanceOf(Elevator e, int dest) {
     int distance = 0;
-    if (e.getHandlingRequest() == null && e.getRequestQueue().isEmpty()) {
+    Request nextRequest = e.getHandlingRequest();
+    List<Request> remainingQueue = e.getRequestQueue();
+    if (nextRequest == null && remainingQueue.isEmpty()) {
       distance = Math.abs(dest - e.getCurrentFloor());
     } else {
-      Request nextRequest = e.getHandlingRequest();
-      List<Request> remainingQueue = e.getRequestQueue();
       if (nextRequest == null) {
         nextRequest = remainingQueue.remove(0);
       }

@@ -10,10 +10,10 @@ public class Elevator implements Runnable {
   private Request handlingRequest;
   private List<Request> requestQueue = new LinkedList<>();
 
-  private boolean onTheWayToFrom;
+  private boolean onTheWayToFrom = true;
   private String visualColor = "\u001B[30m";
 
-  private int internalCounter = 0;
+  private boolean shutdown = false;
 
   public Elevator(String name) {
     this(name, 0);
@@ -76,33 +76,29 @@ public class Elevator implements Runnable {
     this.currentFloor += 1;
   }
 
+  public void shutdown() {
+    this.shutdown = true;
+  }
+
   @Override
   public void run() {
     try {
-      while (true) {
-        Thread.sleep(100);
+      while (!this.shutdown) {
+        Thread.sleep(1000);
         if (this.handlingRequest == null && this.requestQueue.isEmpty()) {
-          internalCounter++;
-          if (internalCounter < 10) {
-            continue;
-          } else {
-            // After 10 attempts of handling a request without new requests, the elevator will be
-            // shut down
-            break;
-          }
+          continue;
         } else if (this.handlingRequest == null) {
           this.handlingRequest = this.requestQueue.remove(0);
         }
-        internalCounter = 0;
 
         int distanceToFrom = Math.abs(this.handlingRequest.getFrom() - this.currentFloor);
         int distanceBetweenToAndFrom =
             Math.abs(this.handlingRequest.getTo() - this.handlingRequest.getFrom());
 
         this.setVisualColor("\u001B[31m"); // sets elevator color to red for empty runs
-        onTheWayToFrom = true;
+        this.onTheWayToFrom = true;
         for (int i = 0; i < distanceToFrom; i++) {
-          Thread.sleep(100);
+          Thread.sleep(1000);
           if (this.handlingRequest.getFrom() > this.currentFloor) {
             this.goUp();
           } else {
@@ -111,9 +107,9 @@ public class Elevator implements Runnable {
         }
         this.setVisualColor("\u001B[32m"); // sets elevator color to green when on the way
                                            // to destination
-        onTheWayToFrom = false;
+        this.onTheWayToFrom = false;
         for (int i = 0; i < distanceBetweenToAndFrom; i++) {
-          Thread.sleep(100);
+          Thread.sleep(1000);
           if (this.handlingRequest.getTo() > this.currentFloor) {
             this.goUp();
           } else {
