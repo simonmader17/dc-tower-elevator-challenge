@@ -50,6 +50,11 @@ public class ElevatorSystem {
     }).start();
   }
 
+  /**
+   * Adds a request to the queue of the elevator that can handle the request the fastest.
+   * 
+   * @param request the request to be added to the queue
+   */
   public void addRequest(Request request) {
     Elevator fastestElevator = getFastestElevatorToDest(request.getFrom());
     fastestElevator.addRequestToQueue(request);
@@ -98,8 +103,12 @@ public class ElevatorSystem {
     Request nextRequest = e.getHandlingRequest();
     List<Request> remainingQueue = e.getRequestQueue();
     if (nextRequest == null && remainingQueue.isEmpty()) {
+      // If the elevator is not handling any requests, just calculate the distance between the
+      // elevators current floor and the destination floor
       distance = Math.abs(dest - e.getCurrentFloor());
     } else {
+      // If the elevator is handling requests, calculate the distance the elevator has to travel for
+      // every request before going to the destination floor
       if (nextRequest == null) {
         nextRequest = remainingQueue.remove(0);
       }

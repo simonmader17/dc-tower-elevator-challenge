@@ -68,11 +68,11 @@ public class Elevator implements Runnable {
     return this.onTheWayToFrom;
   }
 
-  public void goDown() {
+  private void goDown() {
     this.currentFloor -= 1;
   }
 
-  public void goUp() {
+  private void goUp() {
     this.currentFloor += 1;
   }
 
@@ -83,7 +83,9 @@ public class Elevator implements Runnable {
   @Override
   public void run() {
     try {
+      // Runs indefinitely until the shutdown() method of the elevator instance is called
       while (!this.shutdown) {
+        // Checks the queue for new requests every second
         Thread.sleep(1000);
         if (this.handlingRequest == null && this.requestQueue.isEmpty()) {
           continue;
@@ -91,10 +93,14 @@ public class Elevator implements Runnable {
           this.handlingRequest = this.requestQueue.remove(0);
         }
 
+        // Calculates the distance between the current floor and the pickup floor of the request
         int distanceToFrom = Math.abs(this.handlingRequest.getFrom() - this.currentFloor);
+        // Calculates the distance between the destination and pickup floors of the request
         int distanceBetweenToAndFrom =
             Math.abs(this.handlingRequest.getTo() - this.handlingRequest.getFrom());
 
+        // Elevator travels to the specified floors of the request by travelling 1 floor every
+        // second
         this.setVisualColor("\u001B[31m"); // sets elevator color to red for empty runs
         this.onTheWayToFrom = true;
         for (int i = 0; i < distanceToFrom; i++) {
