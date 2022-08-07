@@ -47,14 +47,9 @@ public class ElevatorSystem {
     }).start();
   }
 
-  public void execute(Request request) {
+  public void addRequest(Request request) {
     Elevator fastestElevator = getFastestElevatorToDest(request.getFrom());
     fastestElevator.addRequestToQueue(request);
-  }
-
-  public void shutdown() {
-    elevators.stream().forEach((e) -> e.shutdown());
-    elevatorPool.shutdown();
   }
 
   public boolean isReadyForShutdown() {
@@ -66,12 +61,17 @@ public class ElevatorSystem {
     return true;
   }
 
+  public void shutdown() {
+    elevators.stream().forEach((e) -> e.shutdown());
+    elevatorPool.shutdown();
+  }
+
   public Elevator getFastestElevatorToDest(int dest) {
-    Elevator fastestElevator = elevators.stream().sorted((a, b) -> {
+    Elevator fastestElevator = elevators.stream().min((a, b) -> {
       int distanceA = getTotalDistanceOf(a, dest);
       int distanceB = getTotalDistanceOf(b, dest);
       return Integer.compare(distanceA, distanceB);
-    }).findFirst().get();
+    }).get();
     return fastestElevator;
   }
 
@@ -102,8 +102,14 @@ public class ElevatorSystem {
     return distance;
   }
 
+  public List<Elevator> checkAvailableElevators() {
+    return elevators.stream()
+        .filter((e) -> e.getHandlingRequest() == null && e.getRequestQueue().isEmpty())
+        .collect(Collectors.toList());
+  }
+
   @Override
   public String toString() {
-    return elevators.stream().map((e) -> e.toString()).collect(Collectors.joining("\n"));
+    return elevators.stream().map(Elevator::toString).collect(Collectors.joining("\n"));
   }
 }
