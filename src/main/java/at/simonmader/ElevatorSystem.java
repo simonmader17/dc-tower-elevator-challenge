@@ -11,7 +11,7 @@ public class ElevatorSystem {
   public static final int NUM_FLOORS = 55;
 
   private List<Elevator> elevators = new LinkedList<>();
-  private ExecutorService elevatorPool = Executors.newFixedThreadPool(7);
+  private ExecutorService elevatorPool = Executors.newFixedThreadPool(NUM_ELEVATORS);
 
   public ElevatorSystem() {
     this(true);
@@ -29,6 +29,9 @@ public class ElevatorSystem {
     }
   }
 
+  /**
+   * Prints the state of all elevators every second in a seperate thread.
+   */
   public void printState() {
     new Thread(() -> {
       System.out.println(this);
@@ -66,6 +69,13 @@ public class ElevatorSystem {
     elevatorPool.shutdown();
   }
 
+  /**
+   * Returns the elevator that has to travel the smallest distance to the specific destination
+   * floor.
+   * 
+   * @param dest the destination floor
+   * @return the fastest elevator
+   */
   public Elevator getFastestElevatorToDest(int dest) {
     Elevator fastestElevator = elevators.stream().min((a, b) -> {
       int distanceA = getTotalDistanceOf(a, dest);
@@ -75,6 +85,14 @@ public class ElevatorSystem {
     return fastestElevator;
   }
 
+  /**
+   * Calculates the total distance an elevator has to travel before getting to a specific
+   * destination floor.
+   * 
+   * @param e the elevator
+   * @param dest the destination floor
+   * @return the total distance
+   */
   public static int getTotalDistanceOf(Elevator e, int dest) {
     int distance = 0;
     Request nextRequest = e.getHandlingRequest();
